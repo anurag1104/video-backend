@@ -15,10 +15,12 @@ import fs from "fs";
                resource_type : 'auto' 
             })
             //file has been uploaded successfully
-            console.log("File is uploaded on cloudinary" , response.url);
+            //console.log("File is uploaded on cloudinary" , response.url);
+            fs.unlinkSync(localFilePath) //unlinkSync means synchronous deletion. Instead of doing it async
             return response;
         } catch (error) {
             fs.unlinkSync(localFilePath) //remove the locally saved temp file as the upload got failed
+            console.log("File Upload Error")
             return null;
         }
     }

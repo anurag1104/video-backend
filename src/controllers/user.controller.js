@@ -23,42 +23,49 @@ const registerUser = asyncHandler( async(req, res) =>{
         ){
             throw new apiError(400, "All fields are required")
         }  
-    const existedUser = User.findOne({
+    const existedUser = await User.findOne({
         $or : [{username},{email}]
     })
     if (existedUser){
         throw new apiError(409, "User with this email or username already exists")
     }
+    //console.log(req.body);
 
     const avatarLocalPath = req.files?.avatar[0]?.path;  //to validate file upload. The req.files is made available by multer middleware
-    const coverLocalPath = req.files?.coverImage[0]?.path;
+    //const coverLocalPath = req.files?.coverImage[0]?.path;
+    let coverLocalPath;
+    if(req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length>0){
+        coverLocalPath = req.files.coverImage[0].path
+    }
 
     if (!avatarLocalPath){
         throw new apiError(400, "Avatar File is required")
     }
-    if (!coverLocalPath){
-        throw new apiError(400, "Cover image is required")
-    }
+    console.log(avatarLocalPath)
+    // if (!coverLocalPath){
+    //     throw new apiError(400, "Cover image is required")
+    // }
+    console.log(coverLocalPath)
     const avatar = await uploadOnCloudinary(avatarLocalPath) //await because this might take time
     const coverImage = await uploadOnCloudinary(coverLocalPath)
     if (!avatar) {
         throw new apiError(400,"Avatar file is required")
     }
-    if (!coverImage){
-        throw new apiError(400,"Cover image is required")
-    }
+    // if (!coverImage){
+    //     throw new apiError(400,"Cover image is required")
+    // }
 
     const user = await User.create({
         fullName,
         avatar: avatar.url,
-        coverImage : coverImage.url || "",
+        coverImage : coverImage?.url || "",
         email,
         password,
         username : username.toLowerCase()
     })
 
     const createdUser = await User.findById(user._id).select(
-        "-password, -refreshToken"
+        "-password"
     ) //this removes these fields from the response
 
     if(!createdUser){
